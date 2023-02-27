@@ -1,24 +1,26 @@
 const User = require("../models/User");
 const Role = require("../models/Role");
 const bcrypt = require("bcryptjs");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
-const {secret} = require('../config')
+const { secret } = require("../config");
 
 const generateAccesToken = (id, roles) => {
   const payload = {
     id,
-    roles
-  }
-  return jwt.sign(payload, secret, {expiresIn: "24h"})
-}
+    roles,
+  };
+  return jwt.sign(payload, secret, { expiresIn: "24h" });
+};
 
 class authController {
   async registration(req, res) {
     try {
-      const errors = validationResult(req)
-      if(!errors.isEmpty()){
-        return res.status(400).json({message: "Ошибка при регистрации", errors})
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res
+          .status(400)
+          .json({ message: "Ошибка при регистрации", errors });
       }
       const { username, password } = req.body;
       const candidate = await User.findOne({ username });
@@ -50,21 +52,20 @@ class authController {
           .status(400)
           .json({ message: `пользователь ${username} не найден` });
       }
-      const validPassword = bcrypt.compareSync(password, user.password)
-      if(!validPassword) {
-        return res
-        .status(400).json({message: 'Введен неверный пароль'})
+      const validPassword = bcrypt.compareSync(password, user.password);
+      if (!validPassword) {
+        return res.status(400).json({ message: "Введен неверный пароль" });
       }
-      const token = generateAccesToken(user._id, user.roles)
-      return res.json({token})
+      const token = generateAccesToken(user._id, user.roles);
+      return res.json({ token });
     } catch (error) {
-      return res.status(400).json({message: 'Login error'})
+      return res.status(400).json({ message: "Login error" });
     }
   }
   async getUsers(req, res) {
     try {
-      const users = await User.find()
-      res.json({users});
+      const users = await User.find();
+      res.json({ users });
     } catch (error) {}
   }
 }
