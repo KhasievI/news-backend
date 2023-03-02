@@ -7,6 +7,7 @@ module.exports.newsController = {
         title: req.body.title,
         text: req.body.text,
         category: req.body.category,
+        img: req.body.img,
       });
       return res.json(news);
     } catch (error) {

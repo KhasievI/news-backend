@@ -23,7 +23,7 @@ module.exports.comment = {
   },
   getCommById: async (req, res) => {
     try {
-      const comms = await Comment.find({ news: req.params.news }).populate(
+      const comms = await Comment.find().populate(
         "news"
       );
       return res.json(comms);
