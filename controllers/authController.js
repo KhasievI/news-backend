@@ -5,24 +5,21 @@ const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const { secret } = require("../config");
 
-const generateAccesToken = (id, roles) => {
+const generateAccesToken = (id, roles, name, lastname) => {
   const payload = {
     id,
     roles,
+    name,
+    lastname,
   };
-  return jwt.sign(payload, secret, { expiresIn: "24h" });
+  return jwt.sign(payload, secret, { expiresIn: "7d" });
 };
 
 class authController {
   async registration(req, res) {
     try {
       const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res
-          .status(400)
-          .json({ message: "Ошибка при регистрации", errors });
-      }
-      const { username, password } = req.body;
+      const { name, lastname, username, password } = req.body;
       const candidate = await User.findOne({ username });
       if (candidate) {
         return res
@@ -32,10 +29,24 @@ class authController {
       const hashPassword = bcrypt.hashSync(password, 7);
       const userRole = await Role.findOne({ value: "USER" });
       const user = new User({
+        name,
+        lastname,
         username,
         password: hashPassword,
         roles: [userRole.value],
       });
+      if (!username) {
+        return res
+          .status(400)
+          .json({ message: "Имя пользователя не может быть пустым" });
+      }
+      if (password.length >= 12 || password.length < 4) {
+        return res
+          .status(400)
+          .json({
+            message: "Пароль не может быть меньше 4 или больше 12 символов",
+          });
+      }
       await user.save();
       return res.json({ message: "пользователь успешно зарегистрирован" });
     } catch (error) {
@@ -56,7 +67,12 @@ class authController {
       if (!validPassword) {
         return res.status(400).json({ message: "Введен неверный пароль" });
       }
-      const token = generateAccesToken(user._id, user.roles);
+      const token = generateAccesToken(
+        user._id,
+        user.roles,
+        user.name,
+        user.lastname
+      );
       return res.json({ token });
     } catch (error) {
       return res.status(400).json({ message: "Login error" });
